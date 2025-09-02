@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 
 import { AppSidebar } from "@/components/app-sidebar";
@@ -9,11 +12,35 @@ import {
    SidebarProvider,
    SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { HistoryItem } from "@/lib/types";
+import { getHistory } from "@/lib/history";
 
 export default function Page() {
+   const [history, setHistory] = useState<HistoryItem[]>([]);
+   const [selectedHistoryItem, setSelectedHistoryItem] =
+      useState<HistoryItem | null>(null);
+
+   useEffect(() => {
+      setHistory(getHistory());
+   }, []);
+
+   const handleHistoryUpdate = (newHistory: HistoryItem[]) => {
+      setHistory(newHistory);
+   };
+
+   const handleHistoryItemClick = (item: HistoryItem) => {
+      setSelectedHistoryItem(item);
+   };
+
+   const handleClearSelection = () => {
+      setSelectedHistoryItem(null);
+   };
    return (
       <SidebarProvider>
-         <AppSidebar />
+         <AppSidebar
+            history={history}
+            onHistoryItemClick={handleHistoryItemClick}
+         />
          <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                <SidebarTrigger className="-ml-1" />
@@ -26,7 +53,11 @@ export default function Page() {
                   <ModeToggle />
                </div>
             </header>
-            <Generator />
+            <Generator
+               selectedHistoryItem={selectedHistoryItem}
+               onHistoryUpdate={handleHistoryUpdate}
+               onClearSelection={handleClearSelection}
+            />
          </SidebarInset>
       </SidebarProvider>
    );
