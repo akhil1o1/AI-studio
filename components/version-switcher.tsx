@@ -37,7 +37,7 @@ export function VersionSwitcher({
                 <GalleryVerticalEnd className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-medium">Model</span>
+                <span className="font-medium">AI Model</span>
                 <span className="">v{selectedVersion}</span>
               </div>
               <ChevronsUpDown className="ml-auto" />

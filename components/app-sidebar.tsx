@@ -1,7 +1,12 @@
 import * as React from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 
 import { SearchForm } from "@/components/search-form";
 import { VersionSwitcher } from "@/components/version-switcher";
+import { HistoryItem } from "@/lib/types";
+import { getHistory, formatTimeAgo } from "@/lib/history";
+import { blurDataURL } from "@/lib/constants";
 import {
    Sidebar,
    SidebarContent,
@@ -15,29 +20,30 @@ import {
    SidebarRail,
 } from "@/components/ui/sidebar";
 
-// This is sample data.
 const data = {
    versions: ["1.0.1", "1.1.0-alpha", "2.0.0-beta1"],
-   navMain: [
-      {
-         title: "Recent Images",
-         url: "#",
-         items: [
-            {
-               title: "Installation",
-               url: "#",
-               isActive: true,
-            },
-            {
-               title: "Project Structure",
-               url: "#",
-            },
-         ],
-      },
-   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+   history?: HistoryItem[];
+   onHistoryItemClick?: (item: HistoryItem) => void;
+}
+
+export function AppSidebar({
+   history = [],
+   onHistoryItemClick,
+   ...props
+}: AppSidebarProps) {
+   const [localHistory, setLocalHistory] = useState<HistoryItem[]>([]);
+
+   // Load history from localStorage on mount and update when prop changes
+   useEffect(() => {
+      if (history.length > 0) {
+         setLocalHistory(history);
+      } else {
+         setLocalHistory(getHistory());
+      }
+   }, [history]);
    return (
       <Sidebar {...props}>
          <SidebarHeader>
@@ -48,25 +54,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SearchForm />
          </SidebarHeader>
          <SidebarContent>
-            {data.navMain.map((item) => (
-               <SidebarGroup key={item.title}>
-                  <SidebarGroupLabel>{item.title}</SidebarGroupLabel>
-                  <SidebarGroupContent>
-                     <SidebarMenu>
-                        {item.items.map((item) => (
-                           <SidebarMenuItem key={item.title}>
+            <SidebarGroup>
+               <SidebarGroupLabel>Recent Images</SidebarGroupLabel>
+               <SidebarGroupContent>
+                  <SidebarMenu>
+                     {localHistory.length === 0 ? (
+                        <div className="text-sm text-muted-foreground p-4 text-center">
+                           No recent images yet
+                        </div>
+                     ) : (
+                        localHistory.map((item) => (
+                           <SidebarMenuItem key={item.id}>
                               <SidebarMenuButton
                                  asChild
-                                 isActive={item.isActive}
+                                 className="h-auto p-2 cursor-pointer hover:bg-accent/50"
                               >
-                                 <a href={item.url}>{item.title}</a>
+                                 <div
+                                    className="flex items-start gap-3"
+                                    onClick={() => onHistoryItemClick?.(item)}
+                                 >
+                                    <div className="flex-shrink-0">
+                                       <Image
+                                          src={item.originalImageUrl}
+                                          alt="Original uploaded image"
+                                          width={24}
+                                          height={24}
+                                          className="w-12 h-16 object-cover rounded border"
+                                          style={{ objectFit: "cover" }}
+                                          unoptimized
+                                          placeholder="blur"
+                                          blurDataURL={blurDataURL}
+                                       />
+                                    </div>
+                                    <div className="flex-1 min-w-0 my-auto">
+                                       <p className="text-sm font-medium text-foreground truncate capitalize">
+                                          {item.style}
+                                       </p>
+                                       <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed capitalize">
+                                          {item.prompt.length > 25
+                                             ? `${item.prompt.substring(
+                                                  0,
+                                                  25
+                                               )}...`
+                                             : item.prompt}
+                                       </p>
+                                       <p className="text-[10px] text-muted-foreground mt-1">
+                                          {formatTimeAgo(item.createdAt)}
+                                       </p>
+                                    </div>
+                                 </div>
                               </SidebarMenuButton>
                            </SidebarMenuItem>
-                        ))}
-                     </SidebarMenu>
-                  </SidebarGroupContent>
-               </SidebarGroup>
-            ))}
+                        ))
+                     )}
+                  </SidebarMenu>
+               </SidebarGroupContent>
+            </SidebarGroup>
          </SidebarContent>
          <SidebarRail />
       </Sidebar>
