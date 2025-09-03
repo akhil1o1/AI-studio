@@ -2,8 +2,8 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import Image from "next/image";
 
-import { SearchForm } from "@/components/search-form";
-import { VersionSwitcher } from "@/components/version-switcher";
+import { SearchForm } from "@/components/ui/search-form";
+import { VersionSwitcher } from "@/components/ui/version-switcher";
 import { HistoryItem } from "@/lib/types";
 import { getHistory, formatTimeAgo } from "@/lib/history";
 import { blurDataURL } from "@/lib/constants";
@@ -69,7 +69,8 @@ export function AppSidebar({
                                  asChild
                                  className="h-auto p-2 cursor-pointer hover:bg-accent/50"
                               >
-                                 <div
+                                 <button
+                                 
                                     className="flex items-start gap-3"
                                     onClick={() => onHistoryItemClick?.(item)}
                                  >
@@ -102,7 +103,7 @@ export function AppSidebar({
                                           {formatTimeAgo(item.createdAt)}
                                        </p>
                                     </div>
-                                 </div>
+                                 </button>
                               </SidebarMenuButton>
                            </SidebarMenuItem>
                         ))

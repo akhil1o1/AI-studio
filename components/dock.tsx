@@ -65,10 +65,9 @@ export function Dock({
    });
 
    const [isProcessing, setIsProcessing] = useState(false);
-   const [isAborted, setIsAborted] = useState(false);
+   const isAbortedRef = useRef(false);
    const fileInputRef = useRef<HTMLInputElement>(null);
 
-   // TanStack Query mutation for image generation
    const generateMutation = useMutation({
       mutationFn: async (data: {
          imageDataUrl: string;
@@ -76,20 +75,17 @@ export function Dock({
          style: string;
       }) => {
          // Reset abort flag when starting new request
-         setIsAborted(false);
-
-         // Notify parent that generation started
+         isAbortedRef.current = false;
          onGenerationStart?.(formData.imageDataUrl);
-
          const result = await generateImageWithAbort(data);
          return result;
       },
       onSuccess: (result) => {
          // Only process if not aborted
-         if (!isAborted) {
+         console.log("isAbortedRef.current", isAbortedRef.current);
+         if (!isAbortedRef.current) {
             console.log("Image generated successfully", result);
             onImageGenerated?.(result);
-            // Clear form after successful generation
             setFormData({
                image: null,
                imageDataUrl: "",
@@ -99,17 +95,33 @@ export function Dock({
             if (fileInputRef.current) {
                fileInputRef.current.value = "";
             }
+         } else {
+            console.log("Response ignored - request was aborted");
          }
       },
       onError: (error) => {
          // Only show error if not aborted
-         if (!isAborted) {
+         if (!isAbortedRef.current) {
             console.error("Failed to generate image", error);
             toast.error(`Generation failed: ${error.message}`);
+            onAbort?.();
          }
       },
-      retry: 3,
+      retry: (failureCount, error) => {
+         // Do not retry if aborted
+         if (isAbortedRef.current) return false;
+         if (error.name === "AbortError" || error.message.includes("aborted")) {
+            return false;
+         }
+         // retry up to 3 times
+         return failureCount < 3;
+      },
+      retryDelay: (attemptIndex) => {
+         // exponential backoff 1s, 2s, 4s
+         return Math.min(1000 * 2 ** attemptIndex, 30000);
+      },
    });
+   const isGenerating = generateMutation.isPending;
 
    const handleImageUpload = async (file: File) => {
       if (!file.type.startsWith("image/")) {
@@ -182,7 +194,7 @@ export function Dock({
       e.preventDefault();
 
       if (!formData.image || !formData.prompt || !formData.style) {
-         alert("Please fill in all fields");
+         toast.warning("Please fill in all fields");
          return;
       }
 
@@ -195,20 +207,10 @@ export function Dock({
    };
 
    const handleAbort = () => {
-      // Set abort flag to ignore any response
-      setIsAborted(true);
-
-      // Reset the mutation state
-      generateMutation.reset();
-
-      // Notify parent component to clear loading state
+      isAbortedRef.current = true;
       onAbort?.();
-
-      // Show feedback to user
       toast.info("Generation cancelled");
    };
-
-   const isGenerating = generateMutation.isPending;
 
    return (
       <div
