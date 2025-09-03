@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { WifiOffIcon, WifiIcon } from "lucide-react";
 
 export function NetworkStatus() {
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
    const [hasShownOfflineToast, setHasShownOfflineToast] = useState(false);
 
    useEffect(() => {
