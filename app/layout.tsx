@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { QueryProvider } from "@/components/query-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { NetworkStatus } from "@/components/ui/networkStatus";
 
 import "./globals.css";
 
@@ -20,6 +21,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
    title: "Modelia - AI Studio",
    description: "Best AI fashion model generator",
+   manifest: "/manifest.json",
+   icons: {
+      icon: "/icons/icon-192x192.png",
+      apple: "/icons/icon-192x192.png",
+   },
+};
+
+export const viewport: Viewport = {
+   themeColor: "#000000",
 };
 
 export default function RootLayout({
@@ -42,6 +52,7 @@ export default function RootLayout({
                <QueryProvider>{children}</QueryProvider>
             </ThemeProvider>
             <Toaster />
+            <NetworkStatus />
          </body>
       </html>
    );

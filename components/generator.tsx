@@ -70,8 +70,6 @@ export default function Generator({
          const updatedHistory = saveToHistory(historyItem);
          onHistoryUpdate?.(updatedHistory);
       }
-
-      console.log("New image generated:", result);
    };
 
    return (
